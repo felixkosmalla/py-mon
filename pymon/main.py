@@ -4,7 +4,7 @@ from os import getcwd
 from sys import executable
 
 from colorama import Fore, Style, init
-from watchdog.events import PatternMatchingEventHandler
+from watchdog.events import PatternMatchingEventHandler, EVENT_TYPE_OPENED, EVENT_TYPE_CLOSED
 from watchdog.observers import Observer
 
 
@@ -38,7 +38,7 @@ def main():
     def handle_event(event):
         file_change_type = event.event_type
 
-        if file_change_type not in [event.EVENT_TYPE_OPENED, event.EVENT_TYPE_CLOSED]: # in case of 'open' or 'closed' we do not want this to trigger
+        if file_change_type not in [EVENT_TYPE_OPENED, EVENT_TYPE_CLOSED]: # in case of 'open' or 'closed' we do not want this to trigger
             print(Fore.GREEN + "[pymon] restarting due to {}...".format(file_change_type) + Style.RESET_ALL)
             process.kill() if arguments.force_kill else process.terminate()
             if file_change_type == 'deleted':
