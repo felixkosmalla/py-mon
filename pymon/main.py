@@ -20,12 +20,21 @@ def main():
 
     # Adding arguments to the command
     parser.add_argument("filename", type=str, help="The file to execute with pymon", metavar="filename")
-    parser.add_argument("--all", action="store_true", default=False, help="Watch all python Files in directory", dest="all_py")
+    parser.add_argument("--watch-pattern", type=str, default=False, help="Watch files that match the pattern. Add multiple patterns comma separated (e.g. *.py,*.json)", dest="patterns")
+    parser.add_argument("--all", action="store_true", default=False, help="Watch all python Files in directory", dest="all_py")    
     parser.add_argument("--force-kill", action="store_true", default=False, help="Force kills the file instead of terminating it", dest="force_kill")
 
     # Fetch arguments
     arguments = parser.parse_args()
-    event_handler = PatternMatchingEventHandler(patterns=['*.py' if arguments.all_py else arguments.filename])
+    patterns = []
+    if arguments.all_py:
+        patterns = ["*.py"]
+    elif arguments.patterns:
+        patterns = arguments.patterns.split(',')
+    else:
+        patterns = [arguments.filename]
+
+    event_handler = PatternMatchingEventHandler(patterns=patterns)
 
     observer = Observer()
     observer.schedule(event_handler, getcwd(), recursive=True)
@@ -55,6 +64,8 @@ def main():
 
     if arguments.all_py:
         print(Fore.YELLOW + Style.BRIGHT + f"[pymon] watching Directory`" + Style.RESET_ALL)
+    if arguments.patterns:
+        print(Fore.YELLOW + Style.BRIGHT + f"[pymon] watching Directory for files " + arguments.patterns + Style.RESET_ALL)
     print(Fore.GREEN + f"[pymon] starting `python {arguments.filename}`" + Style.RESET_ALL)
     _run_file()
 
