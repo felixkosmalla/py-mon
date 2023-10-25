@@ -37,12 +37,14 @@ def main():
 
     def handle_event(event):
         file_change_type = event.event_type
-        print(Fore.GREEN + "[pymon] restarting due to {}...".format(file_change_type) + Style.RESET_ALL)
-        process.kill() if arguments.force_kill else process.terminate()
-        if file_change_type == 'deleted':
-            exit()
-        elif file_change_type == 'modified':
-            _run_file()
+
+        if file_change_type not in [event.EVENT_TYPE_OPENED, event.EVENT_TYPE_CLOSED]: # in case of 'open' or 'closed' we do not want this to trigger
+            print(Fore.GREEN + "[pymon] restarting due to {}...".format(file_change_type) + Style.RESET_ALL)
+            process.kill() if arguments.force_kill else process.terminate()
+            if file_change_type == 'deleted':
+                exit()
+            elif file_change_type == 'modified':
+                _run_file()
 
     def _prompt_terminate():
         confirm_terminate = input('Are you sure you want to Terminate?(Y|n) ')
