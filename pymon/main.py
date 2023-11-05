@@ -1,17 +1,20 @@
 import argparse
 import subprocess
 from os import getcwd
-from sys import executable
+from sys import executable, exit
+import time
 
 from colorama import Fore, Style, init
 from watchdog.events import PatternMatchingEventHandler, EVENT_TYPE_OPENED, EVENT_TYPE_CLOSED
 from watchdog.observers import Observer
 
 
+
 def main():
     """CLI Command to execute the provided script with pymon"""
     init()
-
+    
+    
     # CLI Argument Parser
     parser = argparse.ArgumentParser(
         prog="pymon",
@@ -39,12 +42,35 @@ def main():
     observer = Observer()
     observer.schedule(event_handler, getcwd(), recursive=True)
     observer.start()
+    
+
+    
 
     def _run_file():
         global process
+        
         process = subprocess.Popen([executable, arguments.filename])
+        
+        try:
+            return_code = process.wait()
+        except:
+            print("killing...")
+            observer.stop()
+            process.kill()
+            observer.join()
+            exit(0)
+            
+        
+        
+        
+        print(f"Process exited with error (return code {return_code}). Restarting ")
+        time.sleep(1)
+            
+        _run_file()
+        
 
     def handle_event(event):
+        
         file_change_type = event.event_type
 
         if file_change_type not in [EVENT_TYPE_OPENED, EVENT_TYPE_CLOSED]: # in case of 'open' or 'closed' we do not want this to trigger
@@ -53,7 +79,8 @@ def main():
             if file_change_type == 'deleted':
                 exit()
             elif file_change_type == 'modified':
-                _run_file()
+                # _run_file()
+                pass
 
     def _prompt_terminate():
         confirm_terminate = input('Are you sure you want to Terminate?(Y|n) ')
@@ -68,6 +95,8 @@ def main():
         print(Fore.YELLOW + Style.BRIGHT + f"[pymon] watching Directory for files " + arguments.patterns + Style.RESET_ALL)
     print(Fore.GREEN + f"[pymon] starting `python {arguments.filename}`" + Style.RESET_ALL)
     _run_file()
+    
+    
 
     try:
         while True:
@@ -76,7 +105,7 @@ def main():
         _prompt_terminate()
 
     observer.join()
-
+    
 
 if __name__ == "__main__":
     main()
